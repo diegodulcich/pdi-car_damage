@@ -1,0 +1,19 @@
+[project]
+name = "car-damage-mvp"
+version = "0.1.0"
+description = "MVP para detección y clasificación de daños en vehículos"
+requires-python = ">=3.10"
+dependencies = [
+    "streamlit>=1.49.0",
+    "ultralytics>=8.3.0",
+    "torch",
+    "torchvision",
+    "opencv-python>=4.10.0",
+    "numpy>=2.0.0",
+    "pandas>=2.2.0",
+    "pillow>=11.0.0",
+    "transformers>=4.35.2",
+]
+
+[tool.uv]
+package = false

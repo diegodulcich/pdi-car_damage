@@ -1,0 +1,15 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.env
+.pytest_cache/
+runs/
+datasets/
+testcases/
+outputs/*
+!outputs/.gitkeep
+*.pt
+!models/yolo/carparts-seg.pt
+.streamlit/secrets.toml
+*.log
