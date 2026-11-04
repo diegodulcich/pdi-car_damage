@@ -29,20 +29,47 @@ Face la primera vez que se carga.
 
 ## 2. Análisis de una imagen en la app
 
+### Relación entre archivos Python
+
+Este es el recorrido normal al iniciar la app y analizar una imagen. Las
+flechas indican llamadas o datos que pasan entre componentes:
+
 ```mermaid
 flowchart TD
-    A["Usuario carga JPG, JPEG o PNG"] --> B{"¿Existe carparts-seg.pt?"}
+    U["Usuario<br/>sube una imagen"] --> A["app.py<br/>valida, decodifica y coordina la interfaz"]
+    C["src/config.py<br/>rutas e identificadores de modelos"] --> A
+    A --> P["src/pipeline.py<br/>coordina detección y clasificación"]
+    P --> D["src/detector.py<br/>YOLO detecta y segmenta piezas"]
+    D -->|piezas, cajas, máscaras y confianza| P
+    P -->|recorte rectangular de cada pieza| CL["src/classifier.py<br/>predice el tipo de daño"]
+    CL -->|daño y confianza| P
+    P -->|resultados combinados| A
+    A --> V["src/visualization.py<br/>dibuja máscaras, cajas y etiquetas"]
+    V -->|imagen anotada| A
+    A --> O["Interfaz Streamlit<br/>imagen procesada y tabla de resultados"]
+```
+
+`train_detector.py` no se ejecuta durante este recorrido: es una herramienta
+separada para entrenar o reanudar el detector y generar
+`models/yolo/carparts-seg.pt`. Los archivos `tests/*.py` tampoco forman parte
+de la ejecución de la app; comprueban componentes del proyecto.
+
+### Pasos del análisis
+
+```mermaid
+flowchart TD
+    A["Usuario carga JPG, JPEG o PNG<br/>app.py"] --> B{"¿Existe el modelo de piezas?<br/>app.py + src/config.py"}
     B -- No --> C["Mostrar error<br/>indicar python train_detector.py"]
-    B -- Sí --> D["Decodificar imagen<br/>OpenCV, formato BGR"]
-    D --> E["Cargar pipeline<br/>reutilizado por st.cache_resource"]
-    E --> F["YOLO segmenta piezas"]
-    F --> G{"¿Hay piezas detectadas?"}
-    G -- No --> H["Mostrar imagen y aviso<br/>No se detectaron piezas"]
-    G -- Sí --> I["Para cada pieza: recortar su bbox"]
-    I --> J["Clasificar recorte con ViT<br/>beingamit99/car_damage_detection"]
-    J --> K["Unir clase y confianza de daño<br/>a la detección"]
-    K --> L["Dibujar máscara, caja y etiquetas"]
-    L --> M["Mostrar imagen anotada y tabla"]
+    B -- Sí --> D["Decodificar imagen a BGR<br/>app.py"]
+    D --> E["Crear/reutilizar pipeline<br/>app.py + src/pipeline.py"]
+    E --> F["Detectar piezas y obtener bbox/máscaras<br/>src/detector.py"]
+    F --> G{"¿Hay piezas detectadas?<br/>app.py"}
+    G -- No --> H["Mostrar aviso<br/>app.py"]
+    G -- Sí --> I["Recortar bbox de cada pieza<br/>src/pipeline.py"]
+    I --> J["Clasificar cada recorte<br/>src/classifier.py"]
+    J --> K["Combinar datos de pieza y daño<br/>src/pipeline.py"]
+    K --> L["Dibujar máscara, caja y etiquetas<br/>src/visualization.py"]
+    L --> M["Mostrar imagen anotada y tabla<br/>app.py"]
 ```
 
 ## 3. Qué calcula cada componente
